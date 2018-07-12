@@ -31,6 +31,7 @@
     "paragonie/constant_time_encoding": "^2",
     "paragonie/csp-builder": "^2",
     "paragonie/easydb": "^2",
+    "paragonie/hidden-string": "^1",
     "paragonie/gpg-mailer": "^0|^1",
     "paragonie/monolog-quill": "^0|^1",
     "paragonie/recaptcha": "^2.1",
