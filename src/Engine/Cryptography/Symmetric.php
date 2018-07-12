@@ -62,17 +62,27 @@ abstract class Symmetric
         string $encrypted,
         SymmetricKey $key
     ): HiddenString {
+        if (Binary::safeStrlen($encrypted) < 8) {
+            throw new CryptoException(
+                'String too short to be valid ciphertext'
+            );
+        }
         $header = Binary::safeSubstr($encrypted, 0, 8);
         if (!\in_array($header, self::ALLOWED_HEADERS, true)) {
             throw new CryptoException('Invalid message header');
         }
         $encoded = Binary::safeSubstr($encrypted, 8);
         $decoded = Base64UrlSafe::decode($encoded);
+        if (Binary::safeStrlen($decoded) < 40) {
+            throw new CryptoException(
+                'Decoded string too short to be valid ciphertext'
+            );
+        }
 
         $nonce = Binary::safeSubstr($decoded, 0, 24);
         $ciphertext = Binary::safeSubstr($decoded, 24);
 
-        $plaintext = NaCl::crypto_aead_xchacha20poly1305_ietf_encrypt(
+        $plaintext = NaCl::crypto_aead_xchacha20poly1305_ietf_decrypt(
             $ciphertext,
             self::HEADER . $nonce,
             $nonce,

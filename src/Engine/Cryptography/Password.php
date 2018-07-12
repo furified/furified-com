@@ -34,7 +34,7 @@ final class Password
         array $options = self::DEFAULT
     ) {
         $this->key = $key;
-        $this->options = $options;
+        $this->options = $options + self::DEFAULT;
     }
 
     /**
