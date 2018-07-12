@@ -131,6 +131,9 @@ final class GlobalConfig
     }
 
     /**
+     * Get a TemplateRenderer for a specific namespace (i.e. subdirectory
+     * of the templates folder)
+     *
      * @param string $subdir
      * @return TemplateRenderer
      */
@@ -142,10 +145,12 @@ final class GlobalConfig
 
     /**
      * @return bool
-     * @todo Make this environment-specific
      */
     public function isDebug(): bool
     {
-        return true;
+        if (isset($this->settings['debug'])) {
+            return true;
+        }
+        return false;
     }
 }

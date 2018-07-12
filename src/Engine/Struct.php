@@ -184,7 +184,9 @@ abstract class Struct
 
         if ($name === 'id') {
             // RESERVED
-            throw new \InvalidArgumentException('Cannot override an object\'s primary key.');
+            throw new \InvalidArgumentException(
+                'Cannot override an object\'s primary key.'
+            );
         }
 
         if (!\is_null($this->{$name})) {
