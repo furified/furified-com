@@ -13,6 +13,7 @@ use Furified\Web\Engine\Exceptions\FileReadException;
 use Furified\Web\Engine\Exceptions\FurifiedException;
 use Furified\Web\Engine\Exceptions\JSONException;
 use ParagonIE\EasyDB\EasyDB;
+use ParagonIE\EasyDB\Factory;
 
 /**
  * Class GlobalConfig
@@ -56,6 +57,16 @@ final class GlobalConfig
 
         $this->configDir = $path;
         $this->settings = Utility::getJsonFile($path . '/settings.json');
+        $this->db = Factory::create(
+            $this->settings['database']['dsn']
+                ?? 'sqlite:' . $path . '/db.sqlite',
+            $this->settings['database']['user']
+                ?? '',
+            $this->settings['database']['pass'] ??
+                '',
+            $this->settings['database']['options']
+                ?? []
+        );
     }
 
     /**
