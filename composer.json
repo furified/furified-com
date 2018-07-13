@@ -1,6 +1,7 @@
 {
   "name": "furified/website",
   "description": "The source code for furified.com",
+  "license": "ISC",
   "authors": [
     {
       "name": "Soatok Dreamseeker",
