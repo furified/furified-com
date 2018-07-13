@@ -39,20 +39,22 @@ final class Password
 
     /**
      * @param HiddenString $password
+     * @param string $ad             Optional additional data
      *
      * @return string
      * @throws \SodiumException
      */
-    public function hash(HiddenString $password): string
+    public function hash(HiddenString $password, string $ad = ''): string
     {
         $hash = \sodium_crypto_pwhash_str(
             $password->getString(),
             $this->options['ops'],
             $this->options['mem']
         );
-        $ciphertext = Symmetric::encrypt(
+        $ciphertext = Symmetric::encryptWithAd(
             new HiddenString($hash),
-            $this->key
+            $this->key,
+            $ad
         );
         \sodium_memzero($hash);
         return $ciphertext;
@@ -61,14 +63,18 @@ final class Password
     /**
      * @param HiddenString $password
      * @param string $encryptedHash
+     * @param string $ad             Optional additional data
      *
      * @return bool
      * @throws CryptoException
      * @throws \SodiumException
      */
-    public function verify(HiddenString $password, string $encryptedHash): bool
-    {
-        $hash = Symmetric::decrypt($encryptedHash, $this->key);
+    public function verify(
+        HiddenString $password,
+        string $encryptedHash,
+        string $ad = ''
+    ): bool {
+        $hash = Symmetric::decryptWithAd($encryptedHash, $this->key, $ad);
         return \sodium_crypto_pwhash_str_verify(
             $password->getString(),
             $hash->getString()

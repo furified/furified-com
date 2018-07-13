@@ -38,12 +38,28 @@ abstract class Symmetric
         HiddenString $message,
         SymmetricKey $key
     ): string {
+        return self::encryptWithAd($message, $key);
+    }
+
+    /**
+     * @param HiddenString $message
+     * @param SymmetricKey $key
+     * @param string $additionalData
+     *
+     * @return string
+     * @throws \SodiumException
+     */
+    public static function encryptWithAd(
+        HiddenString $message,
+        SymmetricKey $key,
+        string $additionalData = ''
+    ): string {
         $nonce = \random_bytes(24);
 
         // This is IND-CCA3 secure:
         $ciphertext = NaCl::crypto_aead_xchacha20poly1305_ietf_encrypt(
             $message->getString(),
-            self::HEADER . $nonce,
+            self::HEADER . $nonce . $additionalData,
             $nonce,
             $key->getRawKeyMaterial()
         );
@@ -61,6 +77,23 @@ abstract class Symmetric
     public static function decrypt(
         string $encrypted,
         SymmetricKey $key
+    ): HiddenString {
+        return self::decryptWithAd($encrypted, $key);
+    }
+
+    /**
+     * @param string $encrypted
+     * @param SymmetricKey $key
+     * @param string $additionalData
+     *
+     * @return HiddenString
+     * @throws CryptoException
+     * @throws \SodiumException
+     */
+    public static function decryptWithAd(
+        string $encrypted,
+        SymmetricKey $key,
+        string $additionalData = ''
     ): HiddenString {
         if (Binary::safeStrlen($encrypted) < 8) {
             throw new CryptoException(
@@ -84,7 +117,7 @@ abstract class Symmetric
 
         $plaintext = NaCl::crypto_aead_xchacha20poly1305_ietf_decrypt(
             $ciphertext,
-            self::HEADER . $nonce,
+            self::HEADER . $nonce . $additionalData,
             $nonce,
             $key->getRawKeyMaterial()
         );
