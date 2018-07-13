@@ -1,3 +1,5 @@
 /.idea
 /composer.lock
+/data/keys.php
 /data/local
+/data/local/keys.php

@@ -1,4 +1,7 @@
 <?php
+declare(strict_types=1);
+
+use Furified\Web\Engine\Exceptions\FurifiedException;
 use Furified\Web\Engine\GlobalConfig;
 use GuzzleHttp\Psr7\ServerRequest;
 
@@ -16,7 +19,7 @@ require_once FURIFIED_ROOT . '/vendor/autoload.php';
 
 try {
     $config = GlobalConfig::instance();
-} catch (\Furified\Web\Engine\Exceptions\FurifiedException $ex) {
+} catch (FurifiedException $ex) {
     \header('Content-Type: text/plain;charset=UTF-8');
     echo $ex->getMessage(), PHP_EOL;
     exit(1);

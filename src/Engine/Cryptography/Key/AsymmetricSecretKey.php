@@ -2,13 +2,14 @@
 declare(strict_types=1);
 namespace Furified\Web\Engine\Cryptography\Key;
 
+use Furified\Web\Engine\Contract\CryptographicKeyInterface;
 use ParagonIE\HiddenString\HiddenString;
 
 /**
  * Class SymmetricKey
  * @package Furified\Web\Engine\Cryptography\Key
  */
-final class AsymmetricSecretKey
+final class AsymmetricSecretKey implements CryptographicKeyInterface
 {
     /** @var HiddenString $secret */
     private $secret;

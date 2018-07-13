@@ -3,6 +3,11 @@ declare(strict_types=1);
 namespace Furified\Web\Engine;
 
 use function FastRoute\cachedDispatcher;
+use Furified\Web\Engine\Contract\CryptographicKeyInterface;
+use Furified\Web\Engine\Cryptography\Key\AsymmetricPublicKey;
+use Furified\Web\Engine\Cryptography\Key\AsymmetricSecretKey;
+use Furified\Web\Engine\Cryptography\Key\SymmetricKey;
+use Furified\Web\Engine\Exceptions\CryptoException;
 use Furified\Web\Engine\Exceptions\FileNotFoundException;
 use Furified\Web\Engine\Exceptions\FileReadException;
 use Furified\Web\Engine\Exceptions\FurifiedException;
@@ -22,6 +27,9 @@ final class GlobalConfig
 
     /** @var EasyDB $db */
     private $db;
+
+    /** @var array<string, CryptographicKeyInterface> $keyring */
+    private $keyring = [];
 
     /** @var array $settings */
     private $settings;
@@ -51,6 +59,95 @@ final class GlobalConfig
     }
 
     /**
+     * @param bool $forceLoad
+     *
+     * @return array<string, CryptographicKeyInterface>
+     * @throws CryptoException
+     * @throws FileNotFoundException
+     */
+    private function getKeyring(bool $forceLoad = false): array
+    {
+        if (!empty($this->keyring) && !$forceLoad) {
+            return $this->keyring;
+        }
+        if (!\is_readable($this->configDir . '/keys.php')) {
+            throw new FileNotFoundException(
+                'Cannot open ' . $this->configDir . '/keys.php'
+            );
+        }
+
+        $keyring = include $this->configDir . '/keys.php';
+        if (!isset($keyring['secret-key'], $keyring['public-key'], $keyring['shared-key'])) {
+            throw new CryptoException('Mandatory keys are not defined in keyring');
+        }
+        foreach ($keyring as $key) {
+            if (!($key instanceof CryptographicKeyInterface)) {
+                throw new \TypeError();
+            }
+        }
+
+        if (!($keyring['secret-key'] instanceof AsymmetricSecretKey)) {
+            throw new \TypeError();
+        }
+        if (!($keyring['public-key'] instanceof AsymmetricPublicKey)) {
+            throw new \TypeError();
+        }
+        if (!($keyring['shared-key'] instanceof SymmetricKey)) {
+            throw new \TypeError();
+        }
+        $this->keyring = $keyring;
+        return $this->keyring;
+    }
+
+    /**
+     * @return AsymmetricPublicKey
+     * @throws CryptoException
+     * @throws FileNotFoundException
+     */
+    public function getPublicKey(): AsymmetricPublicKey
+    {
+        $keyring = $this->getKeyring();
+        /** @var AsymmetricPublicKey $publicKey */
+        $publicKey = $keyring['public-key'];
+        if (!($keyring['public-key'] instanceof AsymmetricPublicKey)) {
+            throw new \TypeError();
+        }
+        return $publicKey;
+    }
+
+    /**
+     * @return AsymmetricSecretKey
+     * @throws CryptoException
+     * @throws FileNotFoundException
+     */
+    public function getSecretKey(): AsymmetricSecretKey
+    {
+        $keyring = $this->getKeyring();
+        /** @var AsymmetricSecretKey $secretKey */
+        $secretKey = $keyring['secret-key'];
+        if (!($keyring['secret-key'] instanceof AsymmetricSecretKey)) {
+            throw new \TypeError();
+        }
+        return $secretKey;
+    }
+
+    /**
+     * @return SymmetricKey
+     * @throws CryptoException
+     * @throws FileNotFoundException
+     */
+    public function getSymmetricKey(): SymmetricKey
+    {
+        $keyring = $this->getKeyring();
+        /** @var SymmetricKey $sharedKey */
+        $sharedKey = $keyring['shared-key'];
+        if (!($keyring['shared-key'] instanceof SymmetricKey)) {
+            throw new \TypeError();
+        }
+        return $sharedKey;
+    }
+
+    /**
      * @return self
      * @throws FurifiedException
      */
@@ -60,6 +157,14 @@ final class GlobalConfig
             self::$instance = new self();
         }
         return self::$instance;
+    }
+
+    /**
+     * @return string
+     */
+    public function getConfigDirectory(): string
+    {
+        return $this->configDir;
     }
 
     /**
