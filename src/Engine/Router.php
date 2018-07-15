@@ -9,6 +9,8 @@ use Furified\Web\Engine\Exceptions\{
     RoutingException
 };
 use Furified\Web\Engine\Contract\RequestHandlerInterface;
+use function GuzzleHttp\Psr7\stream_for;
+use ParagonIE\Ionizer\InvalidDataException;
 use Psr\Http\Message\{
     RequestInterface,
     ResponseInterface
@@ -83,12 +85,44 @@ class Router
                 'Handler is not an instance of RequestHandlerInterface'
             );
         }
+        $request = $this->filterInput($request, $handler);
         foreach ($handler->getMiddleware() as $mw) {
             if ($mw instanceof MiddlewareInterface) {
                 $request = $mw($request);
             }
         }
         return $handler($request);
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @param RequestHandlerInterface $handler
+     * @return RequestInterface
+     */
+    public function filterInput(
+        RequestInterface $request,
+        RequestHandlerInterface $handler
+    ): RequestInterface {
+        $requestBody = (string) $request->getBody();
+        if (empty($requestBody)) {
+            return $request->withBody(stream_for(''));
+        }
+        $post = [];
+        \parse_str($requestBody, $post);
+
+        try {
+            $fc = $handler->getInputFilterContainer();
+
+            return $request->withBody(
+                stream_for(
+                    \http_build_query(
+                        $fc($post)
+                    )
+                )
+            );
+        } catch (InvalidDataException $ex) {
+            return $request->withBody(stream_for(''));
+        }
     }
 
     /**

@@ -2,14 +2,13 @@
 declare(strict_types=1);
 namespace Furified\Web\FilterRules;
 
-use ParagonIE\Ionizer\Contract\FilterContainerInterface;
 use ParagonIE\Ionizer\InputFilterContainer;
 
 /**
  * Class VoidFilter
  * @package Furified\Web\FilterRules
  */
-class VoidFilter extends InputFilterContainer implements FilterContainerInterface
+class VoidFilter extends InputFilterContainer
 {
     /**
      * VoidFilter constructor.
