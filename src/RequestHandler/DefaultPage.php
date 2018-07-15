@@ -5,8 +5,12 @@ namespace Furified\Web\RequestHandler;
 use Furified\Web\Engine\Contract\RequestHandlerInterface;
 use Furified\Web\Engine\Exceptions\FurifiedException;
 use Furified\Web\Engine\GlobalConfig;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use Furified\Web\FilterRules\VoidFilter;
+use ParagonIE\Ionizer\Contract\FilterContainerInterface;
+use Psr\Http\Message\{
+    RequestInterface,
+    ResponseInterface
+};
 
 /**
  * Class FrontPage
@@ -14,6 +18,14 @@ use Psr\Http\Message\ResponseInterface;
  */
 class DefaultPage implements RequestHandlerInterface
 {
+    /**
+     * @return FilterContainerInterface
+     */
+    public function getInputFilterContainer(): FilterContainerInterface
+    {
+        return new VoidFilter();
+    }
+
     /**
      * @return array<int, MiddlewareInterface>
      */

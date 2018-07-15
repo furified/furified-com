@@ -1,6 +1,7 @@
 <?php
 namespace Furified\Web\Engine\Contract;
 
+use ParagonIE\Ionizer\Contract\FilterContainerInterface;
 use Psr\Http\Message\{
     RequestInterface,
     ResponseInterface
@@ -12,6 +13,11 @@ use Psr\Http\Message\{
  */
 interface RequestHandlerInterface
 {
+    /**
+     * @return FilterContainerInterface
+     */
+    public function getInputFilterContainer(): FilterContainerInterface;
+
     /**
      * @return array<int, MiddlewareInterface>
      */
