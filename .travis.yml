@@ -13,7 +13,6 @@ matrix:
         - php: "nightly"
 
 os:
-    - windows
     - linux
 before_install:
     - git clone -b stable https://github.com/jedisct1/libsodium.git
