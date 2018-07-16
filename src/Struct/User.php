@@ -2,12 +2,19 @@
 declare(strict_types=1);
 namespace Furified\Web\Struct;
 
-use Furified\Web\Engine\Cryptography\Password;
-use Furified\Web\Engine\Exceptions\FurifiedException;
-use Furified\Web\Engine\Exceptions\RaceConditionException;
-use Furified\Web\Engine\GlobalConfig;
-use Furified\Web\Engine\Policies\Unique;
-use Furified\Web\Engine\Struct;
+use Furified\Web\Engine\Cryptography\{
+    Password,
+    Symmetric
+};
+use Furified\Web\Engine\Exceptions\{
+    FurifiedException,
+    RaceConditionException
+};
+use Furified\Web\Engine\{
+    GlobalConfig,
+    Policies\Unique,
+    Struct
+};
 use ParagonIE\HiddenString\HiddenString;
 use ParagonIE_Sodium_Core_Util as Util;
 
@@ -25,8 +32,9 @@ class User extends Struct implements Unique
         'username' => 'username',
         'pwhash' => 'pwHash',
         'twofactor' => 'twoFactorSecret',
+        'gpgfingerprint' => 'gpgFingerprint',
         'email' => 'email',
-        'fullname' => 'fullName'
+        'displayname' => 'displayName'
     ];
 
     /** @var bool $active */
@@ -35,8 +43,11 @@ class User extends Struct implements Unique
     /** @var string $email */
     protected $email = '';
 
-    /** @var string $fullName */
-    protected $fullName = '';
+    /** @var string $displayName */
+    protected $displayName = '';
+
+    /** @var string $gpgFingerprint */
+    protected $gpgFingerprint = '';
 
     /** @var string $username */
     protected $username = '';
@@ -44,32 +55,8 @@ class User extends Struct implements Unique
     /** @var string $pwHash */
     protected $pwHash = '';
 
-    /** @var HiddenString $twoFactorSecret */
+    /** @var string $twoFactorSecret */
     protected $twoFactorSecret;
-
-    /**
-     * @param HiddenString $password
-     *
-     * @return User
-     * @throws FurifiedException
-     * @throws \SodiumException
-     */
-    public function setPassword(HiddenString $password): self
-    {
-        if (!$this->id) {
-            throw new RaceConditionException(
-                'You cannot set a password until the user record has been saved ' .
-                'to the database, in order to prevent race conditions against ' .
-                'the sequential primary key.'
-            );
-        }
-
-        $this->pwHash = $this->getPasswordStorage()->hash(
-            $password,
-            Util::store64_le($this->id)
-        );
-        return $this;
-    }
 
     /**
      * @param HiddenString $password
@@ -104,5 +91,79 @@ class User extends Struct implements Unique
         return new Password(
             (GlobalConfig::instance())->getSymmetricKey()
         );
+    }
+
+    /**
+     * @return HiddenString
+     * @throws FurifiedException
+     * @throws \SodiumException
+     */
+    public function getTwoFactorSecret(): HiddenString
+    {
+        if (!$this->twoFactorSecret) {
+            return new HiddenString('');
+        }
+        return Symmetric::decryptWithAd(
+            $this->twoFactorSecret,
+            (GlobalConfig::instance())->getSymmetricKey(),
+            'two-factor:' . Util::store64_le($this->id)
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return isset($this->twoFactorSecret);
+    }
+
+    /**
+     * @param HiddenString $password
+     *
+     * @return User
+     * @throws FurifiedException
+     * @throws \SodiumException
+     */
+    public function setPassword(HiddenString $password): self
+    {
+        if (!$this->id) {
+            throw new RaceConditionException(
+                'You cannot set a password until the user record has been saved ' .
+                'to the database, in order to prevent race conditions against ' .
+                'the sequential primary key.'
+            );
+        }
+
+        $this->pwHash = $this->getPasswordStorage()->hash(
+            $password,
+            Util::store64_le($this->id)
+        );
+        return $this;
+    }
+
+    /**
+     * @param HiddenString $hiddenString
+     *
+     * @return self
+     * @throws FurifiedException
+     * @throws \SodiumException
+     */
+    public function setTwoFactorSecret(HiddenString $hiddenString): self
+    {
+        if (!$this->id) {
+            throw new RaceConditionException(
+                'You cannot enable 2FA until the user record has been saved ' .
+                'to the database, in order to prevent race conditions against ' .
+                'the sequential primary key.'
+            );
+        }
+
+        $this->twoFactorSecret = Symmetric::encryptWithAd(
+            $hiddenString,
+            (GlobalConfig::instance())->getSymmetricKey(),
+            'two-factor:' . Util::store64_le($this->id)
+        );
+        return $this;
     }
 }

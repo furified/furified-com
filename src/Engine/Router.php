@@ -3,12 +3,14 @@ declare(strict_types=1);
 namespace Furified\Web\Engine;
 
 use FastRoute\Dispatcher;
-use Furified\Web\Engine\Contract\MiddlewareInterface;
+use Furified\Web\Engine\Contract\{
+    MiddlewareInterface,
+    RequestHandlerInterface
+};
 use Furified\Web\Engine\Exceptions\{
     FurifiedException,
     RoutingException
 };
-use Furified\Web\Engine\Contract\RequestHandlerInterface;
 use function GuzzleHttp\Psr7\stream_for;
 use ParagonIE\Ionizer\InvalidDataException;
 use Psr\Http\Message\{
